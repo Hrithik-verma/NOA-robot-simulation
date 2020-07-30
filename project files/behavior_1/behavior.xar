@@ -1,0 +1,2333 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ChoregrapheProject xmlns="http://www.aldebaran-robotics.com/schema/choregraphe/project.xsd" xar_version="3">
+    <Box name="root" id="-1" localization="8" tooltip="Root box of Choregraphe&apos;s behavior. Highest level possible." x="0" y="0">
+        <bitmap>media/images/box/root.png</bitmap>
+        <script language="4">
+            <content>
+                <![CDATA[]]>
+</content>
+        </script>
+        <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+        <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+        <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+        <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+        <Timeline enable="0">
+            <BehaviorLayer name="behavior_layer1">
+                <BehaviorKeyframe name="keyframe1" index="1">
+                    <Diagram>
+                        <Box name="Animated Say" id="1" localization="8" tooltip="Say some text with animations. Note that you must open the box to enter the text." x="79" y="39">
+                            <bitmap>media/images/box/interaction/say.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.bIsRunning = False
+
+    def onUnload(self):
+        self.bIsRunning = False
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+
+    def onInput_onStop(self):
+        if( self.bIsRunning ):
+            self.onUnload()
+            self.onStopped()]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                            <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished or stopped." id="4" />
+                            <Parameter name="Voice shaping (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean.' id="5" />
+                            <Parameter name="Speed (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean." id="6" />
+                            <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                <Choice value="disabled" />
+                                <Choice value="random" />
+                                <Choice value="contextual" />
+                            </Parameter>
+                            <Timeline enable="0">
+                                <BehaviorLayer name="behavior_layer1">
+                                    <BehaviorKeyframe name="keyframe1" index="1">
+                                        <Diagram>
+                                            <Box name="Animated Say Text" id="2" localization="8" tooltip="Say the text received on its input and move during its speech." x="422" y="65">
+                                                <bitmap>media/images/box/interaction/say.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.animSpeech = ALProxy('ALAnimatedSpeech')
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.animSpeech.stop(id)
+            except:
+                pass
+
+    def onInput_onStart(self, p):
+        self.bIsRunning = True
+        try:
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += str(p)
+            sentence +=  "\RST\ "
+            configuration =\
+            {"bodyLanguageMode":self.getParameter("Body language mode")}
+            id = self.animSpeech.post.say(str(sentence), configuration)
+            self.ids.append(id)
+            self.animSpeech.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]>
+</content>
+                                                </script>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                                                <Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                                                <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                                                <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" />
+                                                <Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" />
+                                                <Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" />
+                                                <Parameter name="Body language mode" inherits_from_parent="1" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                                    <Choice value="disabled" />
+                                                    <Choice value="random" />
+                                                    <Choice value="contextual" />
+                                                </Parameter>
+                                            </Box>
+                                            <Box name="Localized Text" id="5" localization="8" tooltip="Send on the output the text associated with the robot&apos;s current voice language.&#x0A;You can display and edit the text associated with any language by&#x0A;selecting the language in the combobox.&#x0A;&#x0A;!!Warning!! The text sent on the output is NOT the displayed one but the one&#x0A;associated with the robot&apos;s current voice language." plugin="localizationbox_plugin" x="114" y="68">
+                                                <bitmap>media/images/box/interaction/vocabulary.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[# /!\ Generated content. Do not edit!
+class MyClass(GeneratedClass):
+	def __init__(self):
+		try: # disable autoBind
+			GeneratedClass.__init__(self, False)
+		except TypeError: # if NAOqi < 1.14
+			GeneratedClass.__init__( self )
+
+		self.tts = ALProxy("ALTextToSpeech")
+		self.sentences = {
+			"Arabic" : "  ",
+			"Czech" : " ^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Danish" : " ^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1) ",
+			"German" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Greek" : "  ",
+			"English" : " Hello!!! ",
+			"Spanish" : " ^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Finnish" : " ^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1) ",
+			"French" : " ^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Italian" : " ^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Japanese" : " ^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Korean" : " ^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Dutch" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Norwegian" : "  ",
+			"Polish" : " ^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Brazilian" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Portuguese" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Russian" : " ^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Swedish" : " ^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Turkish" : " ^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Chinese" : "  "
+		}
+
+	def onInput_onStart(self):
+		sDefaultLang = self.tts.getLanguage()
+		self.onStopped(self.sentences[sDefaultLang])]]>
+</content>
+                                                </script>
+                                                <pluginContent>
+                                                    <arabic>
+                                                        <![CDATA[]]>
+</arabic>
+                                                    <czech>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1)]]>
+</czech>
+                                                    <danish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1)]]>
+</danish>
+                                                    <german>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</german>
+                                                    <greek>
+                                                        <![CDATA[]]>
+</greek>
+                                                    <english>
+                                                        <![CDATA[Hello!!!]]>
+</english>
+                                                    <spanish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1)]]>
+</spanish>
+                                                    <finnish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1)]]>
+</finnish>
+                                                    <french>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1)]]>
+</french>
+                                                    <italian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1)]]>
+</italian>
+                                                    <japanese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1)]]>
+</japanese>
+                                                    <korean>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1)]]>
+</korean>
+                                                    <dutch>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</dutch>
+                                                    <norwegian>
+                                                        <![CDATA[]]>
+</norwegian>
+                                                    <polish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1)]]>
+</polish>
+                                                    <brazilian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</brazilian>
+                                                    <portuguese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</portuguese>
+                                                    <russian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1)]]>
+</russian>
+                                                    <swedish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1)]]>
+</swedish>
+                                                    <turkish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1)]]>
+</turkish>
+                                                    <chinese>
+                                                        <![CDATA[]]>
+</chinese>
+                                                    <language>6</language>
+                                                </pluginContent>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                                                <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Data is sent on the output when this input is stimulated." id="2" />
+                                                <Output name="onStopped" type="3" type_size="1" nature="1" inner="0" tooltip="Data sent when asked." id="3" />
+                                            </Box>
+                                            <Link inputowner="0" indexofinput="4" outputowner="2" indexofoutput="4" />
+                                            <Link inputowner="5" indexofinput="2" outputowner="0" indexofoutput="2" />
+                                            <Link inputowner="2" indexofinput="2" outputowner="5" indexofoutput="3" />
+                                        </Diagram>
+                                    </BehaviorKeyframe>
+                                </BehaviorLayer>
+                            </Timeline>
+                            <Resource name="Speech" type="Lock" timeout="0" />
+                        </Box>
+                        <Box name="Hello" id="2" localization="8" tooltip="Simple hello animation.&#x0A;&#x0A;!!Warning!! There is no speech in this box. It is a just an animation box with some&#x0A;leds animation." x="83" y="196">
+                            <bitmap>media/images/box/movement/move.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        #~ puts code for box initialization here
+        pass
+
+    def onUnload(self):
+        #~ puts code for box cleanup here
+        pass
+
+    def onInput_onStart(self):
+        #~ self.onStopped() #~ activate output of the box
+        pass
+
+    def onInput_onStop(self):
+        self.onUnload() #~ it is recommanded to call onUnload of this box in a onStop method, as the code written in onUnload is used to stop the box as well
+        pass]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+                            <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+                            <Timeline enable="1" fps="25" start_frame="1" end_frame="-1" size="115">
+                                <BehaviorLayer name="behavior_layer1">
+                                    <BehaviorKeyframe name="FaceLeds" index="1">
+                                        <Diagram>
+                                            <Box name="Light_AskForAttentionEyes" id="1" localization="8" tooltip="Set an animated gaze which calls for attention (purple eyes).&#x0A;&#x0A;Note: It is a never ending box. You must call onStop to stop it.&#x0A;&#x0A;*** state: 5a_release ***&#x0A;*** ref box in: 5a_release\Leds\Light_AskForAttentionEyes\Light_AskForAttentionEyes.xar ***&#x0A;*** last modification date(svn): Version it! ***" x="281" y="144">
+                                                <bitmap>media/images/box/interaction/LED.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[class MyClass(GeneratedClass):
+  def __init__(self):
+    GeneratedClass.__init__(self, False)
+
+  def onLoad(self):
+    self.bIsRunning = False;
+    self.leds = ALProxy("ALLeds")
+
+  def onUnload(self):
+    self.onInput_onStop(); # will stop current loop execution
+
+  def onInput_onStart(self):
+    #self.logger.info( self.getName() + ": start - begin" );
+
+    if( self.bIsRunning ):
+      #print( self.getName() + ": already started => nothing" );
+      return;
+
+    self.bIsRunning = True;
+    self.bMustStop = False;
+
+    rDuration = 0.2;
+    self.leds.post.fadeRGB( "FaceLedsTop", 0xff00ff, rDuration );
+    self.leds.post.fadeRGB( "FaceLedsInternal", 0xff00ff, rDuration );
+    self.leds.post.fadeRGB( "FaceLedsBottom", 0xff00ff, rDuration );
+    self.leds.fadeRGB( "FaceLedsExternal", 0xff00ff, rDuration );
+
+    while( not self.bMustStop ):
+      rTime = 0.1;
+      self.leds.post.fadeRGB( "FaceLedsTop", 0xffffff, rTime );
+      self.leds.fadeRGB( "FaceLedsBottom", 0xffffff, rTime );
+      if( self.bMustStop ):
+        break;
+      rTime = 0.3
+      self.leds.post.fadeRGB( "FaceLedsTop", 0xff00ff, rTime );
+      self.leds.fadeRGB( "FaceLedsBottom", 0xff00ff, rTime );
+
+
+    # end while
+    self.bIsRunning = False;
+    self.onStopped();
+
+  def onInput_onStop(self):
+    self.bMustStop = True; # will stop current loop execution]]>
+</content>
+                                                </script>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                                                <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+                                                <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+                                                <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+                                            </Box>
+                                            <Link inputowner="1" indexofinput="2" outputowner="0" indexofoutput="1" />
+                                        </Diagram>
+                                    </BehaviorKeyframe>
+                                </BehaviorLayer>
+                                <ActuatorList model="Nao">
+                                    <ActuatorCurve name="value" actuator="HeadYaw" recordable="1" mute="0" unit="-1">
+                                        <Key frame="20" value="-7.73688" />
+                                        <Key frame="39" value="-20.1296" />
+                                        <Key frame="56" value="-23.8211" />
+                                        <Key frame="70" value="-23.9968" />
+                                        <Key frame="87" value="-29.7977" />
+                                        <Key frame="115" value="-21.5359" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="HeadPitch" recordable="1" mute="0" unit="-1">
+                                        <Key frame="20" value="16.9607" />
+                                        <Key frame="39" value="-9.75839" />
+                                        <Key frame="56" value="-19.5144" />
+                                        <Key frame="70" value="-3.43018" />
+                                        <Key frame="87" value="-11.0768" />
+                                        <Key frame="115" value="-0.617646" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LShoulderPitch" recordable="1" mute="0" unit="-1">
+                                        <Key frame="18" value="64.0707" />
+                                        <Key frame="37" value="53.1721" />
+                                        <Key frame="54" value="53.8752" />
+                                        <Key frame="68" value="49.3927" />
+                                        <Key frame="85" value="51.4143" />
+                                        <Key frame="113" value="48.2502" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LShoulderRoll" recordable="1" mute="0" unit="-1">
+                                        <Key frame="18" value="20.8279" />
+                                        <Key frame="37" value="13.0056" />
+                                        <Key frame="54" value="11.6872" />
+                                        <Key frame="68" value="12.4782" />
+                                        <Key frame="85" value="14.2361" />
+                                        <Key frame="113" value="13.0056" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LElbowYaw" recordable="1" mute="0" unit="-1">
+                                        <Key frame="18" value="-46.0577" />
+                                        <Key frame="37" value="-39.6416" />
+                                        <Key frame="54" value="-38.9384" />
+                                        <Key frame="68" value="-34.9833" />
+                                        <Key frame="85" value="-43.1572" />
+                                        <Key frame="113" value="-38.4111" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LElbowRoll" recordable="1" mute="0" unit="-1">
+                                        <Key frame="18" value="-79.0123" />
+                                        <Key frame="37" value="-73.9145" />
+                                        <Key frame="54" value="-67.7621" />
+                                        <Key frame="68" value="-71.5415" />
+                                        <Key frame="85" value="-75.5845" />
+                                        <Key frame="113" value="-67.85" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LWristYaw" recordable="1" mute="0" unit="-1">
+                                        <Key frame="37" value="8.4352" />
+                                        <Key frame="113" value="6.85315" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHand" recordable="1" mute="0" unit="-1">
+                                        <Key frame="37" value="0.238207" />
+                                        <Key frame="113" value="0.240025" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RShoulderPitch" recordable="1" mute="0" unit="-1">
+                                        <Key frame="16" value="14.153" />
+                                        <Key frame="35" value="-67.1469" />
+                                        <Key frame="52" value="-62.4007" />
+                                        <Key frame="66" value="-72.2446" />
+                                        <Key frame="83" value="-65.8285" />
+                                        <Key frame="111" value="58.4504" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RShoulderRoll" recordable="1" mute="0" unit="-1">
+                                        <Key frame="16" value="-13.8893" />
+                                        <Key frame="35" value="-54.6711" />
+                                        <Key frame="52" value="-26.3699" />
+                                        <Key frame="66" value="-55.0226" />
+                                        <Key frame="83" value="-18.8112" />
+                                        <Key frame="111" value="-14.3288" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RElbowYaw" recordable="1" mute="0" unit="-1">
+                                        <Key frame="16" value="-17.9323" />
+                                        <Key frame="35" value="32.3418" />
+                                        <Key frame="52" value="22.41" />
+                                        <Key frame="66" value="19.949" />
+                                        <Key frame="83" value="21.8826" />
+                                        <Key frame="93" value="56" />
+                                        <Key frame="111" value="47.3712" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RElbowRoll" recordable="1" mute="0" unit="-1">
+                                        <Key frame="16" value="79.3686" />
+                                        <Key frame="35" value="13.8893" />
+                                        <Key frame="42" value="20" />
+                                        <Key frame="52" value="53.5285" />
+                                        <Key frame="60" value="39" />
+                                        <Key frame="66" value="11" />
+                                        <Key frame="76" value="15" />
+                                        <Key frame="83" value="40.5205" />
+                                        <Key frame="93" value="58.4" />
+                                        <Key frame="111" value="72.5131" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RWristYaw" recordable="1" mute="0" unit="-1">
+                                        <Key frame="35" value="-17.9323" />
+                                        <Key frame="83" value="-17.405" />
+                                        <Key frame="111" value="10.4567" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHand" recordable="1" mute="0" unit="-1">
+                                        <Key frame="35" value="0.853478" />
+                                        <Key frame="83" value="0.854933" />
+                                        <Key frame="111" value="0.425116" />
+                                    </ActuatorCurve>
+                                </ActuatorList>
+                            </Timeline>
+                            <Resource name="Head" type="Lock" timeout="0" />
+                            <Resource name="Arms" type="Lock" timeout="0" />
+                            <Resource name="Left eye leds" type="Lock" timeout="0" />
+                            <Resource name="Right eye leds" type="Lock" timeout="0" />
+                        </Box>
+                        <Box name="Animated Say (1)" id="4" localization="8" tooltip="Say some text with animations. Note that you must open the box to enter the text." x="426" y="128">
+                            <bitmap>media/images/box/interaction/say.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.bIsRunning = False
+
+    def onUnload(self):
+        self.bIsRunning = False
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+
+    def onInput_onStop(self):
+        if( self.bIsRunning ):
+            self.onUnload()
+            self.onStopped()]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                            <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished or stopped." id="4" />
+                            <Parameter name="Voice shaping (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean.' id="5" />
+                            <Parameter name="Speed (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean." id="6" />
+                            <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                <Choice value="disabled" />
+                                <Choice value="random" />
+                                <Choice value="contextual" />
+                            </Parameter>
+                            <Timeline enable="0">
+                                <BehaviorLayer name="behavior_layer1">
+                                    <BehaviorKeyframe name="keyframe1" index="1">
+                                        <Diagram>
+                                            <Box name="Animated Say Text" id="2" localization="8" tooltip="Say the text received on its input and move during its speech." x="422" y="65">
+                                                <bitmap>media/images/box/interaction/say.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.animSpeech = ALProxy('ALAnimatedSpeech')
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.animSpeech.stop(id)
+            except:
+                pass
+
+    def onInput_onStart(self, p):
+        self.bIsRunning = True
+        try:
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += str(p)
+            sentence +=  "\RST\ "
+            configuration =\
+            {"bodyLanguageMode":self.getParameter("Body language mode")}
+            id = self.animSpeech.post.say(str(sentence), configuration)
+            self.ids.append(id)
+            self.animSpeech.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]>
+</content>
+                                                </script>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                                                <Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                                                <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                                                <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" />
+                                                <Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" />
+                                                <Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" />
+                                                <Parameter name="Body language mode" inherits_from_parent="1" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                                    <Choice value="disabled" />
+                                                    <Choice value="random" />
+                                                    <Choice value="contextual" />
+                                                </Parameter>
+                                            </Box>
+                                            <Box name="Localized Text" id="5" localization="8" tooltip="Send on the output the text associated with the robot&apos;s current voice language.&#x0A;You can display and edit the text associated with any language by&#x0A;selecting the language in the combobox.&#x0A;&#x0A;!!Warning!! The text sent on the output is NOT the displayed one but the one&#x0A;associated with the robot&apos;s current voice language." plugin="localizationbox_plugin" x="114" y="68">
+                                                <bitmap>media/images/box/interaction/vocabulary.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[# /!\ Generated content. Do not edit!
+class MyClass(GeneratedClass):
+	def __init__(self):
+		try: # disable autoBind
+			GeneratedClass.__init__(self, False)
+		except TypeError: # if NAOqi < 1.14
+			GeneratedClass.__init__( self )
+
+		self.tts = ALProxy("ALTextToSpeech")
+		self.sentences = {
+			"Arabic" : "  ",
+			"Czech" : " ^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Danish" : " ^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1) ",
+			"German" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Greek" : "  ",
+			"English" : " I am Noa Robot ",
+			"Spanish" : " ^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Finnish" : " ^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1) ",
+			"French" : " ^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Italian" : " ^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Japanese" : " ^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Korean" : " ^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Dutch" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Norwegian" : "  ",
+			"Polish" : " ^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Brazilian" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Portuguese" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Russian" : " ^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Swedish" : " ^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Turkish" : " ^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Chinese" : "  "
+		}
+
+	def onInput_onStart(self):
+		sDefaultLang = self.tts.getLanguage()
+		self.onStopped(self.sentences[sDefaultLang])]]>
+</content>
+                                                </script>
+                                                <pluginContent>
+                                                    <arabic>
+                                                        <![CDATA[]]>
+</arabic>
+                                                    <czech>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1)]]>
+</czech>
+                                                    <danish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1)]]>
+</danish>
+                                                    <german>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</german>
+                                                    <greek>
+                                                        <![CDATA[]]>
+</greek>
+                                                    <english>
+                                                        <![CDATA[I am Noa Robot]]>
+</english>
+                                                    <spanish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1)]]>
+</spanish>
+                                                    <finnish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1)]]>
+</finnish>
+                                                    <french>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1)]]>
+</french>
+                                                    <italian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1)]]>
+</italian>
+                                                    <japanese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1)]]>
+</japanese>
+                                                    <korean>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1)]]>
+</korean>
+                                                    <dutch>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</dutch>
+                                                    <norwegian>
+                                                        <![CDATA[]]>
+</norwegian>
+                                                    <polish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1)]]>
+</polish>
+                                                    <brazilian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</brazilian>
+                                                    <portuguese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</portuguese>
+                                                    <russian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1)]]>
+</russian>
+                                                    <swedish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1)]]>
+</swedish>
+                                                    <turkish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1)]]>
+</turkish>
+                                                    <chinese>
+                                                        <![CDATA[]]>
+</chinese>
+                                                    <language>6</language>
+                                                </pluginContent>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                                                <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Data is sent on the output when this input is stimulated." id="2" />
+                                                <Output name="onStopped" type="3" type_size="1" nature="1" inner="0" tooltip="Data sent when asked." id="3" />
+                                            </Box>
+                                            <Link inputowner="0" indexofinput="4" outputowner="2" indexofoutput="4" />
+                                            <Link inputowner="5" indexofinput="2" outputowner="0" indexofoutput="2" />
+                                            <Link inputowner="2" indexofinput="2" outputowner="5" indexofoutput="3" />
+                                        </Diagram>
+                                    </BehaviorKeyframe>
+                                </BehaviorLayer>
+                            </Timeline>
+                            <Resource name="Speech" type="Lock" timeout="0" />
+                        </Box>
+                        <Box name="Wait For Signals" id="5" localization="8" tooltip="Wait for both inputs to be stimulated before stimulating its output." x="327" y="3">
+                            <bitmap>media/images/box/wait.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.ok = [False]*2
+
+    def onUnload(self):
+        #puts code for box cleanup here
+        ""
+
+    def onStart(self, nInput):
+        self.ok[nInput-1] = True
+        bOutput = True
+        for bOk in self.ok:
+            bOutput = bOutput and bOk
+        if( bOutput ):
+            self.ok = [False]*2
+            self.signalsReceived()
+
+    def onInput_signal1(self):
+        self.onStart(1)
+
+    def onInput_signal2(self):
+        self.onStart(2)]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="signal1" type="1" type_size="1" nature="1" inner="0" tooltip="First signal to wait." id="2" />
+                            <Input name="signal2" type="1" type_size="1" nature="1" inner="0" tooltip="Second signal to wait." id="3" />
+                            <Output name="signalsReceived" type="1" type_size="1" nature="2" inner="0" tooltip="Signal sent when both inputs have been stimulated." id="4" />
+                        </Box>
+                        <Box name="Timeline" id="3" localization="8" tooltip="This box is empty (contains a single motion layer with no motor position&#x0A;defined in it) and should be used to create any animation you would like." x="221" y="296">
+                            <bitmap>media/images/box/movement/move.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+                            <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+                            <Timeline enable="1" fps="25" start_frame="1" end_frame="-1" size="5">
+                                <BehaviorLayer name="behavior_layer1">
+                                    <BehaviorKeyframe name="keyframe1" index="1">
+                                        <Diagram />
+                                    </BehaviorKeyframe>
+                                </BehaviorLayer>
+                                <ActuatorList model="nao">
+                                    <ActuatorCurve name="value" actuator="HeadPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-0.704481" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="HeadYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-21.3813" />
+                                        <Key frame="5" value="7.4" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LAnklePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-30.6029" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LAnkleRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="0.406928" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LElbowRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-30.0593" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LElbowYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-85.9333" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHand" recordable="0" mute="0" unit="1">
+                                        <Key frame="1" value="0.245135" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHipPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-18.2954" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHipRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-0.406926" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHipYawPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-0.0536365" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LKneePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="48.907" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LShoulderPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="104.825" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LShoulderRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="15.1593" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LWristYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="7.22996" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RAnklePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-27.7919" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RAnkleRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="0.406949" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RElbowRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="29.4237" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RElbowYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="85.7886" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHand" recordable="0" mute="0" unit="1">
+                                        <Key frame="1" value="0.428684" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHipPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-21.7648" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHipRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-0.406947" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHipYawPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-0.0536365" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RKneePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="50.1475" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RShoulderPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="105.505" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RShoulderRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-15.5441" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RWristYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="9.9238" />
+                                    </ActuatorCurve>
+                                </ActuatorList>
+                            </Timeline>
+                        </Box>
+                        <Box name="Animated Say (2)" id="8" localization="8" tooltip="Say some text with animations. Note that you must open the box to enter the text." x="646" y="178">
+                            <bitmap>media/images/box/interaction/say.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.bIsRunning = False
+
+    def onUnload(self):
+        self.bIsRunning = False
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+
+    def onInput_onStop(self):
+        if( self.bIsRunning ):
+            self.onUnload()
+            self.onStopped()]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                            <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished or stopped." id="4" />
+                            <Parameter name="Voice shaping (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean.' id="5" />
+                            <Parameter name="Speed (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean." id="6" />
+                            <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                <Choice value="disabled" />
+                                <Choice value="random" />
+                                <Choice value="contextual" />
+                            </Parameter>
+                            <Timeline enable="0">
+                                <BehaviorLayer name="behavior_layer1">
+                                    <BehaviorKeyframe name="keyframe1" index="1">
+                                        <Diagram>
+                                            <Box name="Animated Say Text" id="2" localization="8" tooltip="Say the text received on its input and move during its speech." x="422" y="65">
+                                                <bitmap>media/images/box/interaction/say.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.animSpeech = ALProxy('ALAnimatedSpeech')
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.animSpeech.stop(id)
+            except:
+                pass
+
+    def onInput_onStart(self, p):
+        self.bIsRunning = True
+        try:
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += str(p)
+            sentence +=  "\RST\ "
+            configuration =\
+            {"bodyLanguageMode":self.getParameter("Body language mode")}
+            id = self.animSpeech.post.say(str(sentence), configuration)
+            self.ids.append(id)
+            self.animSpeech.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]>
+</content>
+                                                </script>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                                                <Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                                                <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                                                <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" />
+                                                <Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" />
+                                                <Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" />
+                                                <Parameter name="Body language mode" inherits_from_parent="1" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                                    <Choice value="disabled" />
+                                                    <Choice value="random" />
+                                                    <Choice value="contextual" />
+                                                </Parameter>
+                                            </Box>
+                                            <Box name="Localized Text" id="5" localization="8" tooltip="Send on the output the text associated with the robot&apos;s current voice language.&#x0A;You can display and edit the text associated with any language by&#x0A;selecting the language in the combobox.&#x0A;&#x0A;!!Warning!! The text sent on the output is NOT the displayed one but the one&#x0A;associated with the robot&apos;s current voice language." plugin="localizationbox_plugin" x="114" y="68">
+                                                <bitmap>media/images/box/interaction/vocabulary.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[# /!\ Generated content. Do not edit!
+class MyClass(GeneratedClass):
+	def __init__(self):
+		try: # disable autoBind
+			GeneratedClass.__init__(self, False)
+		except TypeError: # if NAOqi < 1.14
+			GeneratedClass.__init__( self )
+
+		self.tts = ALProxy("ALTextToSpeech")
+		self.sentences = {
+			"Arabic" : "  ",
+			"Czech" : " ^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Danish" : " ^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1) ",
+			"German" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Greek" : "  ",
+			"English" : " Will you be my friend ?? ",
+			"Spanish" : " ^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Finnish" : " ^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1) ",
+			"French" : " ^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Italian" : " ^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Japanese" : " ^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Korean" : " ^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Dutch" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Norwegian" : "  ",
+			"Polish" : " ^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Brazilian" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Portuguese" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Russian" : " ^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Swedish" : " ^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Turkish" : " ^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Chinese" : "  "
+		}
+
+	def onInput_onStart(self):
+		sDefaultLang = self.tts.getLanguage()
+		self.onStopped(self.sentences[sDefaultLang])]]>
+</content>
+                                                </script>
+                                                <pluginContent>
+                                                    <arabic>
+                                                        <![CDATA[]]>
+</arabic>
+                                                    <czech>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1)]]>
+</czech>
+                                                    <danish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1)]]>
+</danish>
+                                                    <german>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</german>
+                                                    <greek>
+                                                        <![CDATA[]]>
+</greek>
+                                                    <english>
+                                                        <![CDATA[Will you be my friend ??]]>
+</english>
+                                                    <spanish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1)]]>
+</spanish>
+                                                    <finnish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1)]]>
+</finnish>
+                                                    <french>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1)]]>
+</french>
+                                                    <italian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1)]]>
+</italian>
+                                                    <japanese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1)]]>
+</japanese>
+                                                    <korean>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1)]]>
+</korean>
+                                                    <dutch>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</dutch>
+                                                    <norwegian>
+                                                        <![CDATA[]]>
+</norwegian>
+                                                    <polish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1)]]>
+</polish>
+                                                    <brazilian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</brazilian>
+                                                    <portuguese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</portuguese>
+                                                    <russian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1)]]>
+</russian>
+                                                    <swedish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1)]]>
+</swedish>
+                                                    <turkish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1)]]>
+</turkish>
+                                                    <chinese>
+                                                        <![CDATA[]]>
+</chinese>
+                                                    <language>5</language>
+                                                </pluginContent>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                                                <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Data is sent on the output when this input is stimulated." id="2" />
+                                                <Output name="onStopped" type="3" type_size="1" nature="1" inner="0" tooltip="Data sent when asked." id="3" />
+                                            </Box>
+                                            <Link inputowner="0" indexofinput="4" outputowner="2" indexofoutput="4" />
+                                            <Link inputowner="5" indexofinput="2" outputowner="0" indexofoutput="2" />
+                                            <Link inputowner="2" indexofinput="2" outputowner="5" indexofoutput="3" />
+                                        </Diagram>
+                                    </BehaviorKeyframe>
+                                </BehaviorLayer>
+                            </Timeline>
+                            <Resource name="Speech" type="Lock" timeout="0" />
+                        </Box>
+                        <Box name="Wait For Signals (1)" id="9" localization="8" tooltip="Wait for both inputs to be stimulated before stimulating its output." x="601" y="31">
+                            <bitmap>media/images/box/wait.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.ok = [False]*2
+
+    def onUnload(self):
+        #puts code for box cleanup here
+        ""
+
+    def onStart(self, nInput):
+        self.ok[nInput-1] = True
+        bOutput = True
+        for bOk in self.ok:
+            bOutput = bOutput and bOk
+        if( bOutput ):
+            self.ok = [False]*2
+            self.signalsReceived()
+
+    def onInput_signal1(self):
+        self.onStart(1)
+
+    def onInput_signal2(self):
+        self.onStart(2)]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="signal1" type="1" type_size="1" nature="1" inner="0" tooltip="First signal to wait." id="2" />
+                            <Input name="signal2" type="1" type_size="1" nature="1" inner="0" tooltip="Second signal to wait." id="3" />
+                            <Output name="signalsReceived" type="1" type_size="1" nature="2" inner="0" tooltip="Signal sent when both inputs have been stimulated." id="4" />
+                        </Box>
+                        <Box name="Move To" id="6" localization="8" tooltip="Make the robot move to a configured point relative to its current location." x="432" y="305">
+                            <bitmap>media/images/box/movement/walk_forward.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.motion = ALProxy("ALMotion")
+        self.positionErrorThresholdPos = 0.01
+        self.positionErrorThresholdAng = 0.03
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        self.motion.moveToward(0.0, 0.0, 0.0)
+
+    def onInput_onStart(self):
+        import almath
+        # The command position estimation will be set to the sensor position
+        # when the robot starts moving, so we use sensors first and commands later.
+        initPosition = almath.Pose2D(self.motion.getRobotPosition(True))
+        targetDistance = almath.Pose2D(self.getParameter("Distance X (m)"),
+            self.getParameter("Distance Y (m)"),
+            self.getParameter("Theta (deg)") * almath.PI / 180)
+        expectedEndPosition = initPosition * targetDistance
+        enableArms = self.getParameter("Arms movement enabled")
+        self.motion.setMoveArmsEnabled(enableArms, enableArms)
+        self.motion.moveTo(self.getParameter("Distance X (m)"),
+            self.getParameter("Distance Y (m)"),
+            self.getParameter("Theta (deg)") * almath.PI / 180)
+
+        # The move is finished so output
+        realEndPosition = almath.Pose2D(self.motion.getRobotPosition(False))
+        positionError = realEndPosition.diff(expectedEndPosition)
+        positionError.theta = almath.modulo2PI(positionError.theta)
+        if (abs(positionError.x) < self.positionErrorThresholdPos
+            and abs(positionError.y) < self.positionErrorThresholdPos
+            and abs(positionError.theta) < self.positionErrorThresholdAng):
+            self.onArrivedAtDestination()
+        else:
+            self.onStoppedBeforeArriving(positionError.toVector())
+
+    def onInput_onStop(self):
+        self.onUnload()]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+                            <Output name="onArrivedAtDestination" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when the robot arrives at its destination." id="4" />
+                            <Output name="onStoppedBeforeArriving" type="0" type_size="1" nature="1" inner="0" tooltip="Signal sent when the robot stops before arriving to its destination. Returns a vector [x (m), y (m), theta(rad)] with the remaining distance up to the destination. This distance is expressed in the ROBOT frame." id="5" />
+                            <Parameter name="Distance X (m)" inherits_from_parent="0" content_type="2" value="0.434783" default_value="0.2" min="-5" max="10" tooltip="The distance in meters for forward/backward motion. Positive value&#x0A;means forward, negative value means backward." id="6" />
+                            <Parameter name="Distance Y (m)" inherits_from_parent="0" content_type="2" value="0" default_value="0" min="-5" max="5" tooltip="The distance in meters for lateral motion. Positive value means left, negative&#x0A;value means right." id="7" />
+                            <Parameter name="Theta (deg)" inherits_from_parent="0" content_type="2" value="0" default_value="0" min="-180" max="180" tooltip="The orientation in degrees for final rotation. Positive value means anticlockwise,&#x0A;negative value means clockwise." id="8" />
+                            <Parameter name="Arms movement enabled" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip="Enables natural motion of the arms." id="9" />
+                            <Resource name="Legs" type="Lock" timeout="0" />
+                        </Box>
+                        <Box name="Timeline (1)" id="7" localization="8" tooltip="This box is empty (contains a single motion layer with no motor position&#x0A;defined in it) and should be used to create any animation you would like." x="778" y="341">
+                            <bitmap>media/images/box/movement/move.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+                            <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+                            <Timeline enable="1" fps="10" start_frame="1" end_frame="-1" size="70">
+                                <BehaviorLayer name="behavior_layer1">
+                                    <BehaviorKeyframe name="keyframe1" index="1">
+                                        <Diagram />
+                                    </BehaviorKeyframe>
+                                </BehaviorLayer>
+                                <ActuatorList model="nao">
+                                    <ActuatorCurve name="value" actuator="HeadPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-9.62196" />
+                                        <Key frame="5" value="-21.8" />
+                                        <Key frame="10" value="7.3" />
+                                        <Key frame="15" value="-17.4" />
+                                        <Key frame="20" value="-12.7" />
+                                        <Key frame="25" value="-2.1" />
+                                        <Key frame="70" value="-9.67902" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="HeadYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-0.479881" />
+                                        <Key frame="5" value="-0.431074" />
+                                        <Key frame="10" value="-0.431074" />
+                                        <Key frame="15" value="-0.431074" />
+                                        <Key frame="70" value="0.0446634" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LAnklePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="5.1849" />
+                                        <Key frame="70" value="4.88154" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LAnkleRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-7.33714" />
+                                        <Key frame="70" value="-7.38996" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LElbowRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-23.7479" />
+                                        <Key frame="30" value="-61.5429" />
+                                        <Key frame="35" value="-62.8039" />
+                                        <Key frame="40" value="-69.1889" />
+                                        <Key frame="45" value="-87.393" />
+                                        <Key frame="50" value="-88.441" />
+                                        <Key frame="55" value="-88.3984" />
+                                        <Key frame="60" value="-87.9941" />
+                                        <Key frame="65" value="-87.9941" />
+                                        <Key frame="70" value="-23.5606" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LElbowYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-57.4" />
+                                        <Key frame="30" value="-61.2302" />
+                                        <Key frame="35" value="-65.8419" />
+                                        <Key frame="40" value="-67.627" />
+                                        <Key frame="45" value="-58.8933" />
+                                        <Key frame="50" value="-54.9028" />
+                                        <Key frame="55" value="-57.9494" />
+                                        <Key frame="60" value="-59.7372" />
+                                        <Key frame="65" value="-59.7372" />
+                                        <Key frame="70" value="-68.7112" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHand" recordable="0" mute="0" unit="1">
+                                        <Key frame="1" value="0.292421" />
+                                        <Key frame="30" value="1" />
+                                        <Key frame="35" value="1" />
+                                        <Key frame="40" value="0.996466" />
+                                        <Key frame="45" value="0.996466" />
+                                        <Key frame="50" value="0.996466" />
+                                        <Key frame="55" value="0.66" />
+                                        <Key frame="60" value="0.655427" />
+                                        <Key frame="65" value="0.655427" />
+                                        <Key frame="70" value="0.309611" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHipPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="7.3853" />
+                                        <Key frame="70" value="7.23321" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHipRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="6.13038" />
+                                        <Key frame="70" value="5.46542" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHipYawPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-10.1466" />
+                                        <Key frame="70" value="-9.27876" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LKneePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-5.10029" />
+                                        <Key frame="70" value="-4.72603" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LShoulderPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="84.1283" />
+                                        <Key frame="30" value="33.9671" />
+                                        <Key frame="35" value="28.3215" />
+                                        <Key frame="40" value="27.0454" />
+                                        <Key frame="45" value="11.3324" />
+                                        <Key frame="50" value="36.9138" />
+                                        <Key frame="55" value="36.7261" />
+                                        <Key frame="60" value="36.9226" />
+                                        <Key frame="65" value="36.9226" />
+                                        <Key frame="70" value="84.3047" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LShoulderRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="13.6" />
+                                        <Key frame="30" value="-10.1042" />
+                                        <Key frame="35" value="-12.954" />
+                                        <Key frame="40" value="-10.4645" />
+                                        <Key frame="45" value="-5.32887" />
+                                        <Key frame="50" value="-5.63589" />
+                                        <Key frame="55" value="-8.67599" />
+                                        <Key frame="60" value="-5.6786" />
+                                        <Key frame="65" value="-5.6786" />
+                                        <Key frame="70" value="10.6796" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LWristYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="10.4" />
+                                        <Key frame="30" value="0.0481459" />
+                                        <Key frame="35" value="-1.46089" />
+                                        <Key frame="40" value="-0.990122" />
+                                        <Key frame="45" value="3.91423" />
+                                        <Key frame="50" value="0.252205" />
+                                        <Key frame="55" value="0.632963" />
+                                        <Key frame="60" value="0.707368" />
+                                        <Key frame="65" value="0.707368" />
+                                        <Key frame="70" value="5.34426" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RAnklePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="5.18543" />
+                                        <Key frame="70" value="4.88154" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RAnkleRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="7.19685" />
+                                        <Key frame="70" value="7.38748" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RElbowRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="23.7356" />
+                                        <Key frame="30" value="61.5429" />
+                                        <Key frame="35" value="62.8041" />
+                                        <Key frame="40" value="69.1893" />
+                                        <Key frame="45" value="87.4103" />
+                                        <Key frame="50" value="88.4469" />
+                                        <Key frame="55" value="88.405" />
+                                        <Key frame="60" value="87.9896" />
+                                        <Key frame="65" value="87.9896" />
+                                        <Key frame="70" value="23.5188" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RElbowYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="57.4" />
+                                        <Key frame="30" value="61.2302" />
+                                        <Key frame="35" value="65.8418" />
+                                        <Key frame="40" value="67.6271" />
+                                        <Key frame="45" value="58.8857" />
+                                        <Key frame="50" value="54.8988" />
+                                        <Key frame="55" value="57.9416" />
+                                        <Key frame="60" value="59.7253" />
+                                        <Key frame="65" value="59.7253" />
+                                        <Key frame="70" value="68.5356" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHand" recordable="0" mute="0" unit="1">
+                                        <Key frame="1" value="0.296697" />
+                                        <Key frame="30" value="1" />
+                                        <Key frame="35" value="1" />
+                                        <Key frame="40" value="0.996487" />
+                                        <Key frame="45" value="0.996487" />
+                                        <Key frame="50" value="0.996487" />
+                                        <Key frame="55" value="0.66" />
+                                        <Key frame="60" value="0.655362" />
+                                        <Key frame="65" value="0.655362" />
+                                        <Key frame="70" value="0.304009" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHipPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="7.3853" />
+                                        <Key frame="70" value="7.23321" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHipRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-5.73596" />
+                                        <Key frame="70" value="-5.45076" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHipYawPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-10.1466" />
+                                        <Key frame="70" value="-9.27876" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RKneePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-5.09994" />
+                                        <Key frame="70" value="-4.72603" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RShoulderPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="84.1454" />
+                                        <Key frame="30" value="33.9671" />
+                                        <Key frame="35" value="28.3204" />
+                                        <Key frame="40" value="27.0442" />
+                                        <Key frame="45" value="11.2663" />
+                                        <Key frame="50" value="37.0278" />
+                                        <Key frame="55" value="36.8419" />
+                                        <Key frame="60" value="37.0573" />
+                                        <Key frame="65" value="37.0573" />
+                                        <Key frame="70" value="84.0177" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RShoulderRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-13.6" />
+                                        <Key frame="30" value="10.1042" />
+                                        <Key frame="35" value="12.9541" />
+                                        <Key frame="40" value="10.4647" />
+                                        <Key frame="45" value="5.22163" />
+                                        <Key frame="50" value="5.80889" />
+                                        <Key frame="55" value="8.66499" />
+                                        <Key frame="60" value="5.6592" />
+                                        <Key frame="65" value="5.6592" />
+                                        <Key frame="70" value="-10.5041" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RWristYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-10.4" />
+                                        <Key frame="30" value="0.167349" />
+                                        <Key frame="35" value="1.61009" />
+                                        <Key frame="40" value="1.16" />
+                                        <Key frame="45" value="-3.91026" />
+                                        <Key frame="50" value="-0.252196" />
+                                        <Key frame="55" value="-0.632522" />
+                                        <Key frame="60" value="-0.4324" />
+                                        <Key frame="65" value="-0.4324" />
+                                        <Key frame="70" value="5.60438" />
+                                    </ActuatorCurve>
+                                </ActuatorList>
+                            </Timeline>
+                        </Box>
+                        <Box name="Animated Say (3)" id="10" localization="8" tooltip="Say some text with animations. Note that you must open the box to enter the text." x="774" y="191">
+                            <bitmap>media/images/box/interaction/say.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.bIsRunning = False
+
+    def onUnload(self):
+        self.bIsRunning = False
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+
+    def onInput_onStop(self):
+        if( self.bIsRunning ):
+            self.onUnload()
+            self.onStopped()]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                            <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished or stopped." id="4" />
+                            <Parameter name="Voice shaping (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean.' id="5" />
+                            <Parameter name="Speed (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean." id="6" />
+                            <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                <Choice value="disabled" />
+                                <Choice value="random" />
+                                <Choice value="contextual" />
+                            </Parameter>
+                            <Timeline enable="0">
+                                <BehaviorLayer name="behavior_layer1">
+                                    <BehaviorKeyframe name="keyframe1" index="1">
+                                        <Diagram>
+                                            <Box name="Animated Say Text" id="2" localization="8" tooltip="Say the text received on its input and move during its speech." x="422" y="65">
+                                                <bitmap>media/images/box/interaction/say.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.animSpeech = ALProxy('ALAnimatedSpeech')
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.animSpeech.stop(id)
+            except:
+                pass
+
+    def onInput_onStart(self, p):
+        self.bIsRunning = True
+        try:
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += str(p)
+            sentence +=  "\RST\ "
+            configuration =\
+            {"bodyLanguageMode":self.getParameter("Body language mode")}
+            id = self.animSpeech.post.say(str(sentence), configuration)
+            self.ids.append(id)
+            self.animSpeech.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]>
+</content>
+                                                </script>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                                                <Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                                                <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                                                <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" />
+                                                <Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" />
+                                                <Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" />
+                                                <Parameter name="Body language mode" inherits_from_parent="1" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                                    <Choice value="disabled" />
+                                                    <Choice value="random" />
+                                                    <Choice value="contextual" />
+                                                </Parameter>
+                                            </Box>
+                                            <Box name="Localized Text" id="5" localization="8" tooltip="Send on the output the text associated with the robot&apos;s current voice language.&#x0A;You can display and edit the text associated with any language by&#x0A;selecting the language in the combobox.&#x0A;&#x0A;!!Warning!! The text sent on the output is NOT the displayed one but the one&#x0A;associated with the robot&apos;s current voice language." plugin="localizationbox_plugin" x="114" y="68">
+                                                <bitmap>media/images/box/interaction/vocabulary.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[# /!\ Generated content. Do not edit!
+class MyClass(GeneratedClass):
+	def __init__(self):
+		try: # disable autoBind
+			GeneratedClass.__init__(self, False)
+		except TypeError: # if NAOqi < 1.14
+			GeneratedClass.__init__( self )
+
+		self.tts = ALProxy("ALTextToSpeech")
+		self.sentences = {
+			"Arabic" : "  ",
+			"Czech" : " ^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Danish" : " ^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1) ",
+			"German" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Greek" : "  ",
+			"English" : " Please!!! ",
+			"Spanish" : " ^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Finnish" : " ^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1) ",
+			"French" : " ^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Italian" : " ^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Japanese" : " ^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Korean" : " ^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Dutch" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Norwegian" : "  ",
+			"Polish" : " ^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Brazilian" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Portuguese" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Russian" : " ^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Swedish" : " ^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Turkish" : " ^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Chinese" : "  "
+		}
+
+	def onInput_onStart(self):
+		sDefaultLang = self.tts.getLanguage()
+		self.onStopped(self.sentences[sDefaultLang])]]>
+</content>
+                                                </script>
+                                                <pluginContent>
+                                                    <arabic>
+                                                        <![CDATA[]]>
+</arabic>
+                                                    <czech>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1)]]>
+</czech>
+                                                    <danish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1)]]>
+</danish>
+                                                    <german>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</german>
+                                                    <greek>
+                                                        <![CDATA[]]>
+</greek>
+                                                    <english>
+                                                        <![CDATA[Please!!!]]>
+</english>
+                                                    <spanish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1)]]>
+</spanish>
+                                                    <finnish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1)]]>
+</finnish>
+                                                    <french>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1)]]>
+</french>
+                                                    <italian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1)]]>
+</italian>
+                                                    <japanese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1)]]>
+</japanese>
+                                                    <korean>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1)]]>
+</korean>
+                                                    <dutch>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</dutch>
+                                                    <norwegian>
+                                                        <![CDATA[]]>
+</norwegian>
+                                                    <polish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1)]]>
+</polish>
+                                                    <brazilian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</brazilian>
+                                                    <portuguese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</portuguese>
+                                                    <russian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1)]]>
+</russian>
+                                                    <swedish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1)]]>
+</swedish>
+                                                    <turkish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1)]]>
+</turkish>
+                                                    <chinese>
+                                                        <![CDATA[]]>
+</chinese>
+                                                    <language>5</language>
+                                                </pluginContent>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                                                <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Data is sent on the output when this input is stimulated." id="2" />
+                                                <Output name="onStopped" type="3" type_size="1" nature="1" inner="0" tooltip="Data sent when asked." id="3" />
+                                            </Box>
+                                            <Link inputowner="0" indexofinput="4" outputowner="2" indexofoutput="4" />
+                                            <Link inputowner="5" indexofinput="2" outputowner="0" indexofoutput="2" />
+                                            <Link inputowner="2" indexofinput="2" outputowner="5" indexofoutput="3" />
+                                        </Diagram>
+                                    </BehaviorKeyframe>
+                                </BehaviorLayer>
+                            </Timeline>
+                            <Resource name="Speech" type="Lock" timeout="0" />
+                        </Box>
+                        <Box name="Wait For Signals (2)" id="11" localization="8" tooltip="Wait for both inputs to be stimulated before stimulating its output." x="1199" y="41">
+                            <bitmap>media/images/box/wait.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.ok = [False]*2
+
+    def onUnload(self):
+        #puts code for box cleanup here
+        ""
+
+    def onStart(self, nInput):
+        self.ok[nInput-1] = True
+        bOutput = True
+        for bOk in self.ok:
+            bOutput = bOutput and bOk
+        if( bOutput ):
+            self.ok = [False]*2
+            self.signalsReceived()
+
+    def onInput_signal1(self):
+        self.onStart(1)
+
+    def onInput_signal2(self):
+        self.onStart(2)]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="signal1" type="1" type_size="1" nature="1" inner="0" tooltip="First signal to wait." id="2" />
+                            <Input name="signal2" type="1" type_size="1" nature="1" inner="0" tooltip="Second signal to wait." id="3" />
+                            <Output name="signalsReceived" type="1" type_size="1" nature="2" inner="0" tooltip="Signal sent when both inputs have been stimulated." id="4" />
+                        </Box>
+                        <Box name="Timeline (2)" id="12" localization="8" tooltip="This box is empty (contains a single motion layer with no motor position&#x0A;defined in it) and should be used to create any animation you would like." x="1105" y="367">
+                            <bitmap>media/images/box/movement/move.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+                            <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+                            <Timeline enable="1" fps="10" start_frame="1" end_frame="-1" size="60">
+                                <BehaviorLayer name="behavior_layer1">
+                                    <BehaviorKeyframe name="keyframe1" index="1">
+                                        <Diagram />
+                                    </BehaviorKeyframe>
+                                </BehaviorLayer>
+                                <ActuatorList model="nao">
+                                    <ActuatorCurve name="value" actuator="HeadPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-9.74028" />
+                                        <Key frame="60" value="-9.72386" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="HeadYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="0" />
+                                        <Key frame="60" value="0.0446634" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LAnklePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="5.15662" />
+                                        <Key frame="60" value="4.87757" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LAnkleRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-7.44845" />
+                                        <Key frame="60" value="-7.29674" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LElbowRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-24.0934" />
+                                        <Key frame="5" value="-24.0934" />
+                                        <Key frame="10" value="-24.0934" />
+                                        <Key frame="15" value="-24.0934" />
+                                        <Key frame="20" value="-24.0934" />
+                                        <Key frame="25" value="-24.0934" />
+                                        <Key frame="30" value="-24.0934" />
+                                        <Key frame="35" value="-24.0934" />
+                                        <Key frame="40" value="-24.0934" />
+                                        <Key frame="45" value="-24.0934" />
+                                        <Key frame="50" value="-24.0934" />
+                                        <Key frame="60" value="-23.8735" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LElbowYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-68.9999" />
+                                        <Key frame="5" value="-68.9999" />
+                                        <Key frame="10" value="-68.9999" />
+                                        <Key frame="15" value="-68.9999" />
+                                        <Key frame="20" value="-68.9999" />
+                                        <Key frame="25" value="-68.9999" />
+                                        <Key frame="30" value="-68.9999" />
+                                        <Key frame="35" value="-68.9999" />
+                                        <Key frame="40" value="-68.9999" />
+                                        <Key frame="45" value="-68.9999" />
+                                        <Key frame="50" value="-68.9999" />
+                                        <Key frame="60" value="-68.5221" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHand" recordable="0" mute="0" unit="1">
+                                        <Key frame="1" value="0.3" />
+                                        <Key frame="5" value="0.3" />
+                                        <Key frame="10" value="0.3" />
+                                        <Key frame="15" value="0.3" />
+                                        <Key frame="20" value="0.3" />
+                                        <Key frame="25" value="0.3" />
+                                        <Key frame="30" value="0.3" />
+                                        <Key frame="35" value="0.3" />
+                                        <Key frame="40" value="0.3" />
+                                        <Key frame="45" value="0.3" />
+                                        <Key frame="50" value="0.3" />
+                                        <Key frame="60" value="0.304806" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHipPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="7.44845" />
+                                        <Key frame="60" value="7.06317" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHipRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="5.15516" />
+                                        <Key frame="60" value="5.29842" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LHipYawPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-9.74028" />
+                                        <Key frame="60" value="-9.62662" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LKneePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-5.15662" />
+                                        <Key frame="60" value="-4.83208" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LShoulderPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="81.0159" />
+                                        <Key frame="5" value="80.3567" />
+                                        <Key frame="10" value="80.3567" />
+                                        <Key frame="15" value="80.3567" />
+                                        <Key frame="20" value="79.7694" />
+                                        <Key frame="25" value="79.7694" />
+                                        <Key frame="30" value="79.7694" />
+                                        <Key frame="35" value="79.7694" />
+                                        <Key frame="40" value="79.7694" />
+                                        <Key frame="45" value="79.7694" />
+                                        <Key frame="50" value="79.7694" />
+                                        <Key frame="60" value="83.8367" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LShoulderRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="13.3195" />
+                                        <Key frame="5" value="13.9014" />
+                                        <Key frame="10" value="13.9014" />
+                                        <Key frame="15" value="13.9014" />
+                                        <Key frame="20" value="14.5256" />
+                                        <Key frame="25" value="15.1005" />
+                                        <Key frame="30" value="15.1005" />
+                                        <Key frame="35" value="15.1005" />
+                                        <Key frame="40" value="15.1005" />
+                                        <Key frame="45" value="15.1005" />
+                                        <Key frame="50" value="14.469" />
+                                        <Key frame="60" value="10.7867" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="LWristYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="5.72958" />
+                                        <Key frame="5" value="5.72958" />
+                                        <Key frame="10" value="5.72958" />
+                                        <Key frame="15" value="5.72958" />
+                                        <Key frame="20" value="5.72958" />
+                                        <Key frame="25" value="5.72958" />
+                                        <Key frame="30" value="5.72958" />
+                                        <Key frame="35" value="5.72958" />
+                                        <Key frame="40" value="5.72958" />
+                                        <Key frame="45" value="5.72958" />
+                                        <Key frame="50" value="5.72958" />
+                                        <Key frame="60" value="5.33665" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RAnklePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="5.15662" />
+                                        <Key frame="60" value="4.87757" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RAnkleRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="7.44845" />
+                                        <Key frame="60" value="6.87662" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RElbowRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="24.9942" />
+                                        <Key frame="5" value="42.8735" />
+                                        <Key frame="10" value="61.098" />
+                                        <Key frame="15" value="35.1059" />
+                                        <Key frame="20" value="35.1059" />
+                                        <Key frame="25" value="35.1059" />
+                                        <Key frame="30" value="35.1059" />
+                                        <Key frame="35" value="35.1059" />
+                                        <Key frame="40" value="35.1059" />
+                                        <Key frame="45" value="35.1059" />
+                                        <Key frame="50" value="35.1059" />
+                                        <Key frame="60" value="23.6231" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RElbowYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="69.2627" />
+                                        <Key frame="5" value="68.3862" />
+                                        <Key frame="10" value="68.3862" />
+                                        <Key frame="15" value="68.3862" />
+                                        <Key frame="20" value="68.3862" />
+                                        <Key frame="25" value="68.3862" />
+                                        <Key frame="30" value="68.3862" />
+                                        <Key frame="35" value="68.3862" />
+                                        <Key frame="40" value="68.3862" />
+                                        <Key frame="45" value="68.3862" />
+                                        <Key frame="50" value="68.3862" />
+                                        <Key frame="60" value="68.3464" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHand" recordable="0" mute="0" unit="1">
+                                        <Key frame="1" value="0.312199" />
+                                        <Key frame="5" value="0.0200238" />
+                                        <Key frame="10" value="0.0200238" />
+                                        <Key frame="15" value="0.991173" />
+                                        <Key frame="20" value="0.991173" />
+                                        <Key frame="25" value="0.991173" />
+                                        <Key frame="30" value="0.991173" />
+                                        <Key frame="35" value="0.991173" />
+                                        <Key frame="40" value="0.991173" />
+                                        <Key frame="45" value="0.991173" />
+                                        <Key frame="50" value="0.991173" />
+                                        <Key frame="60" value="0.301759" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHipPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="7.44845" />
+                                        <Key frame="60" value="7.06317" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHipRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-5.72958" />
+                                        <Key frame="60" value="-5.66091" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RHipYawPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-9.74028" />
+                                        <Key frame="60" value="-9.62662" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RKneePitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-5.15662" />
+                                        <Key frame="60" value="-4.83208" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RShoulderPitch" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="81.0576" />
+                                        <Key frame="5" value="51.4335" />
+                                        <Key frame="10" value="49.8073" />
+                                        <Key frame="15" value="24.2891" />
+                                        <Key frame="20" value="30.4429" />
+                                        <Key frame="25" value="13.2184" />
+                                        <Key frame="30" value="30.3442" />
+                                        <Key frame="35" value="13.1395" />
+                                        <Key frame="40" value="30.4772" />
+                                        <Key frame="45" value="30.4772" />
+                                        <Key frame="50" value="23.8661" />
+                                        <Key frame="60" value="84.2971" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RShoulderRoll" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="-12.8837" />
+                                        <Key frame="5" value="-5.9142" />
+                                        <Key frame="10" value="-1.70352" />
+                                        <Key frame="15" value="-1.70352" />
+                                        <Key frame="20" value="-1.70352" />
+                                        <Key frame="25" value="-1.70352" />
+                                        <Key frame="30" value="-1.70352" />
+                                        <Key frame="35" value="-1.70352" />
+                                        <Key frame="40" value="-1.70352" />
+                                        <Key frame="45" value="-1.70352" />
+                                        <Key frame="50" value="-1.70352" />
+                                        <Key frame="60" value="-10.2759" />
+                                    </ActuatorCurve>
+                                    <ActuatorCurve name="value" actuator="RWristYaw" recordable="0" mute="0" unit="0">
+                                        <Key frame="1" value="5.15501" />
+                                        <Key frame="5" value="5.15501" />
+                                        <Key frame="10" value="5.15501" />
+                                        <Key frame="15" value="5.15501" />
+                                        <Key frame="20" value="5.15501" />
+                                        <Key frame="25" value="5.15501" />
+                                        <Key frame="30" value="5.15501" />
+                                        <Key frame="35" value="5.15501" />
+                                        <Key frame="40" value="5.15501" />
+                                        <Key frame="45" value="5.15501" />
+                                        <Key frame="50" value="5.15501" />
+                                        <Key frame="60" value="5.44924" />
+                                    </ActuatorCurve>
+                                </ActuatorList>
+                            </Timeline>
+                        </Box>
+                        <Box name="Animated Say (4)" id="13" localization="8" tooltip="Say some text with animations. Note that you must open the box to enter the text." x="931" y="228">
+                            <bitmap>media/images/box/interaction/say.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.bIsRunning = False
+
+    def onUnload(self):
+        self.bIsRunning = False
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+
+    def onInput_onStop(self):
+        if( self.bIsRunning ):
+            self.onUnload()
+            self.onStopped()]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                            <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished or stopped." id="4" />
+                            <Parameter name="Voice shaping (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean.' id="5" />
+                            <Parameter name="Speed (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean." id="6" />
+                            <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                <Choice value="disabled" />
+                                <Choice value="random" />
+                                <Choice value="contextual" />
+                            </Parameter>
+                            <Timeline enable="0">
+                                <BehaviorLayer name="behavior_layer1">
+                                    <BehaviorKeyframe name="keyframe1" index="1">
+                                        <Diagram>
+                                            <Box name="Animated Say Text" id="2" localization="8" tooltip="Say the text received on its input and move during its speech." x="422" y="65">
+                                                <bitmap>media/images/box/interaction/say.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.animSpeech = ALProxy('ALAnimatedSpeech')
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.animSpeech.stop(id)
+            except:
+                pass
+
+    def onInput_onStart(self, p):
+        self.bIsRunning = True
+        try:
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += str(p)
+            sentence +=  "\RST\ "
+            configuration =\
+            {"bodyLanguageMode":self.getParameter("Body language mode")}
+            id = self.animSpeech.post.say(str(sentence), configuration)
+            self.ids.append(id)
+            self.animSpeech.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]>
+</content>
+                                                </script>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                                                <Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                                                <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                                                <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" />
+                                                <Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" />
+                                                <Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" />
+                                                <Parameter name="Body language mode" inherits_from_parent="1" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                                    <Choice value="disabled" />
+                                                    <Choice value="random" />
+                                                    <Choice value="contextual" />
+                                                </Parameter>
+                                            </Box>
+                                            <Box name="Localized Text" id="5" localization="8" tooltip="Send on the output the text associated with the robot&apos;s current voice language.&#x0A;You can display and edit the text associated with any language by&#x0A;selecting the language in the combobox.&#x0A;&#x0A;!!Warning!! The text sent on the output is NOT the displayed one but the one&#x0A;associated with the robot&apos;s current voice language." plugin="localizationbox_plugin" x="114" y="68">
+                                                <bitmap>media/images/box/interaction/vocabulary.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[# /!\ Generated content. Do not edit!
+class MyClass(GeneratedClass):
+	def __init__(self):
+		try: # disable autoBind
+			GeneratedClass.__init__(self, False)
+		except TypeError: # if NAOqi < 1.14
+			GeneratedClass.__init__( self )
+
+		self.tts = ALProxy("ALTextToSpeech")
+		self.sentences = {
+			"Arabic" : "  ",
+			"Czech" : " ^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Danish" : " ^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1) ",
+			"German" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Greek" : "  ",
+			"English" : " FRIENDS!!! ",
+			"Spanish" : " ^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Finnish" : " ^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1) ",
+			"French" : " ^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Italian" : " ^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Japanese" : " ^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Korean" : " ^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Dutch" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Norwegian" : "  ",
+			"Polish" : " ^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Brazilian" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Portuguese" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Russian" : " ^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Swedish" : " ^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Turkish" : " ^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Chinese" : "  "
+		}
+
+	def onInput_onStart(self):
+		sDefaultLang = self.tts.getLanguage()
+		self.onStopped(self.sentences[sDefaultLang])]]>
+</content>
+                                                </script>
+                                                <pluginContent>
+                                                    <arabic>
+                                                        <![CDATA[]]>
+</arabic>
+                                                    <czech>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1)]]>
+</czech>
+                                                    <danish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1)]]>
+</danish>
+                                                    <german>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</german>
+                                                    <greek>
+                                                        <![CDATA[]]>
+</greek>
+                                                    <english>
+                                                        <![CDATA[FRIENDS!!!]]>
+</english>
+                                                    <spanish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1)]]>
+</spanish>
+                                                    <finnish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1)]]>
+</finnish>
+                                                    <french>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1)]]>
+</french>
+                                                    <italian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1)]]>
+</italian>
+                                                    <japanese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1)]]>
+</japanese>
+                                                    <korean>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1)]]>
+</korean>
+                                                    <dutch>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</dutch>
+                                                    <norwegian>
+                                                        <![CDATA[]]>
+</norwegian>
+                                                    <polish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1)]]>
+</polish>
+                                                    <brazilian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</brazilian>
+                                                    <portuguese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</portuguese>
+                                                    <russian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1)]]>
+</russian>
+                                                    <swedish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1)]]>
+</swedish>
+                                                    <turkish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1)]]>
+</turkish>
+                                                    <chinese>
+                                                        <![CDATA[]]>
+</chinese>
+                                                    <language>5</language>
+                                                </pluginContent>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                                                <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Data is sent on the output when this input is stimulated." id="2" />
+                                                <Output name="onStopped" type="3" type_size="1" nature="1" inner="0" tooltip="Data sent when asked." id="3" />
+                                            </Box>
+                                            <Link inputowner="0" indexofinput="4" outputowner="2" indexofoutput="4" />
+                                            <Link inputowner="5" indexofinput="2" outputowner="0" indexofoutput="2" />
+                                            <Link inputowner="2" indexofinput="2" outputowner="5" indexofoutput="3" />
+                                        </Diagram>
+                                    </BehaviorKeyframe>
+                                </BehaviorLayer>
+                            </Timeline>
+                            <Resource name="Speech" type="Lock" timeout="0" />
+                        </Box>
+                        <Box name="Wait For Signals (3)" id="14" localization="8" tooltip="Wait for both inputs to be stimulated before stimulating its output." x="891" y="20">
+                            <bitmap>media/images/box/wait.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.ok = [False]*2
+
+    def onUnload(self):
+        #puts code for box cleanup here
+        ""
+
+    def onStart(self, nInput):
+        self.ok[nInput-1] = True
+        bOutput = True
+        for bOk in self.ok:
+            bOutput = bOutput and bOk
+        if( bOutput ):
+            self.ok = [False]*2
+            self.signalsReceived()
+
+    def onInput_signal1(self):
+        self.onStart(1)
+
+    def onInput_signal2(self):
+        self.onStart(2)]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="signal1" type="1" type_size="1" nature="1" inner="0" tooltip="First signal to wait." id="2" />
+                            <Input name="signal2" type="1" type_size="1" nature="1" inner="0" tooltip="Second signal to wait." id="3" />
+                            <Output name="signalsReceived" type="1" type_size="1" nature="2" inner="0" tooltip="Signal sent when both inputs have been stimulated." id="4" />
+                        </Box>
+                        <Box name="Animated Say (5)" id="15" localization="8" tooltip="Say some text with animations. Note that you must open the box to enter the text." x="1058" y="234">
+                            <bitmap>media/images/box/interaction/say.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.bIsRunning = False
+
+    def onUnload(self):
+        self.bIsRunning = False
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+
+    def onInput_onStop(self):
+        if( self.bIsRunning ):
+            self.onUnload()
+            self.onStopped()]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                            <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished or stopped." id="4" />
+                            <Parameter name="Voice shaping (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean.' id="5" />
+                            <Parameter name="Speed (%)" inherits_from_parent="0" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed.&#x0A;&#x0A;!Warning! This feature is not available yet in Japanese, Chinese and Korean." id="6" />
+                            <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                <Choice value="disabled" />
+                                <Choice value="random" />
+                                <Choice value="contextual" />
+                            </Parameter>
+                            <Timeline enable="0">
+                                <BehaviorLayer name="behavior_layer1">
+                                    <BehaviorKeyframe name="keyframe1" index="1">
+                                        <Diagram>
+                                            <Box name="Animated Say Text" id="2" localization="8" tooltip="Say the text received on its input and move during its speech." x="422" y="65">
+                                                <bitmap>media/images/box/interaction/say.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.animSpeech = ALProxy('ALAnimatedSpeech')
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.animSpeech.stop(id)
+            except:
+                pass
+
+    def onInput_onStart(self, p):
+        self.bIsRunning = True
+        try:
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += str(p)
+            sentence +=  "\RST\ "
+            configuration =\
+            {"bodyLanguageMode":self.getParameter("Body language mode")}
+            id = self.animSpeech.post.say(str(sentence), configuration)
+            self.ids.append(id)
+            self.animSpeech.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]>
+</content>
+                                                </script>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                                                <Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" />
+                                                <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" />
+                                                <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" />
+                                                <Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" />
+                                                <Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" />
+                                                <Parameter name="Body language mode" inherits_from_parent="1" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user. ex: ^start(...) or ^tag(...)&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="7">
+                                                    <Choice value="disabled" />
+                                                    <Choice value="random" />
+                                                    <Choice value="contextual" />
+                                                </Parameter>
+                                            </Box>
+                                            <Box name="Localized Text" id="5" localization="8" tooltip="Send on the output the text associated with the robot&apos;s current voice language.&#x0A;You can display and edit the text associated with any language by&#x0A;selecting the language in the combobox.&#x0A;&#x0A;!!Warning!! The text sent on the output is NOT the displayed one but the one&#x0A;associated with the robot&apos;s current voice language." plugin="localizationbox_plugin" x="114" y="68">
+                                                <bitmap>media/images/box/interaction/vocabulary.png</bitmap>
+                                                <script language="4">
+                                                    <content>
+                                                        <![CDATA[# /!\ Generated content. Do not edit!
+class MyClass(GeneratedClass):
+	def __init__(self):
+		try: # disable autoBind
+			GeneratedClass.__init__(self, False)
+		except TypeError: # if NAOqi < 1.14
+			GeneratedClass.__init__( self )
+
+		self.tts = ALProxy("ALTextToSpeech")
+		self.sentences = {
+			"Arabic" : "  ",
+			"Czech" : " ^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Danish" : " ^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1) ",
+			"German" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Greek" : "  ",
+			"English" : " FRIENDS!!! ",
+			"Spanish" : " ^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Finnish" : " ^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1) ",
+			"French" : " ^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Italian" : " ^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Japanese" : " ^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Korean" : " ^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Dutch" : " ^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Norwegian" : "  ",
+			"Polish" : " ^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Brazilian" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Portuguese" : " ^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Russian" : " ^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Swedish" : " ^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Turkish" : " ^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1) ",
+			"Chinese" : "  "
+		}
+
+	def onInput_onStart(self):
+		sDefaultLang = self.tts.getLanguage()
+		self.onStopped(self.sentences[sDefaultLang])]]>
+</content>
+                                                </script>
+                                                <pluginContent>
+                                                    <arabic>
+                                                        <![CDATA[]]>
+</arabic>
+                                                    <czech>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ahoj ^wait(animations/Stand/Gestures/Hey_1)]]>
+</czech>
+                                                    <danish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hej ^wait(animations/Stand/Gestures/Hey_1)]]>
+</danish>
+                                                    <german>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</german>
+                                                    <greek>
+                                                        <![CDATA[]]>
+</greek>
+                                                    <english>
+                                                        <![CDATA[FRIENDS!!!]]>
+</english>
+                                                    <spanish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hola ^wait(animations/Stand/Gestures/Hey_1)]]>
+</spanish>
+                                                    <finnish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hei ^wait(animations/Stand/Gestures/Hey_1)]]>
+</finnish>
+                                                    <french>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Bonjour ^wait(animations/Stand/Gestures/Hey_1)]]>
+</french>
+                                                    <italian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Ciao ^wait(animations/Stand/Gestures/Hey_1)]]>
+</italian>
+                                                    <japanese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) こんにちは ^wait(animations/Stand/Gestures/Hey_1)]]>
+</japanese>
+                                                    <korean>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) 안녕하세요 ^wait(animations/Stand/Gestures/Hey_1)]]>
+</korean>
+                                                    <dutch>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallo ^wait(animations/Stand/Gestures/Hey_1)]]>
+</dutch>
+                                                    <norwegian>
+                                                        <![CDATA[]]>
+</norwegian>
+                                                    <polish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Cześć ^wait(animations/Stand/Gestures/Hey_1)]]>
+</polish>
+                                                    <brazilian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</brazilian>
+                                                    <portuguese>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Olá ^wait(animations/Stand/Gestures/Hey_1)]]>
+</portuguese>
+                                                    <russian>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Привет ^wait(animations/Stand/Gestures/Hey_1)]]>
+</russian>
+                                                    <swedish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Hallå ^wait(animations/Stand/Gestures/Hey_1)]]>
+</swedish>
+                                                    <turkish>
+                                                        <![CDATA[^start(animations/Stand/Gestures/Hey_1) Merhaba ^wait(animations/Stand/Gestures/Hey_1)]]>
+</turkish>
+                                                    <chinese>
+                                                        <![CDATA[]]>
+</chinese>
+                                                    <language>6</language>
+                                                </pluginContent>
+                                                <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                                                <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Data is sent on the output when this input is stimulated." id="2" />
+                                                <Output name="onStopped" type="3" type_size="1" nature="1" inner="0" tooltip="Data sent when asked." id="3" />
+                                            </Box>
+                                            <Link inputowner="0" indexofinput="4" outputowner="2" indexofoutput="4" />
+                                            <Link inputowner="5" indexofinput="2" outputowner="0" indexofoutput="2" />
+                                            <Link inputowner="2" indexofinput="2" outputowner="5" indexofoutput="3" />
+                                        </Diagram>
+                                    </BehaviorKeyframe>
+                                </BehaviorLayer>
+                            </Timeline>
+                            <Resource name="Speech" type="Lock" timeout="0" />
+                        </Box>
+                        <Link inputowner="1" indexofinput="2" outputowner="0" indexofoutput="2" />
+                        <Link inputowner="2" indexofinput="2" outputowner="0" indexofoutput="2" />
+                        <Link inputowner="5" indexofinput="2" outputowner="1" indexofoutput="4" />
+                        <Link inputowner="4" indexofinput="2" outputowner="5" indexofoutput="4" />
+                        <Link inputowner="3" indexofinput="2" outputowner="2" indexofoutput="4" />
+                        <Link inputowner="5" indexofinput="3" outputowner="3" indexofoutput="4" />
+                        <Link inputowner="6" indexofinput="2" outputowner="3" indexofoutput="4" />
+                        <Link inputowner="9" indexofinput="2" outputowner="4" indexofoutput="4" />
+                        <Link inputowner="9" indexofinput="3" outputowner="6" indexofoutput="4" />
+                        <Link inputowner="8" indexofinput="2" outputowner="9" indexofoutput="4" />
+                        <Link inputowner="7" indexofinput="2" outputowner="6" indexofoutput="4" />
+                        <Link inputowner="9" indexofinput="3" outputowner="6" indexofoutput="5" />
+                        <Link inputowner="7" indexofinput="2" outputowner="6" indexofoutput="5" />
+                        <Link inputowner="10" indexofinput="2" outputowner="8" indexofoutput="4" />
+                        <Link inputowner="11" indexofinput="3" outputowner="12" indexofoutput="4" />
+                        <Link inputowner="14" indexofinput="2" outputowner="10" indexofoutput="4" />
+                        <Link inputowner="13" indexofinput="2" outputowner="14" indexofoutput="4" />
+                        <Link inputowner="14" indexofinput="3" outputowner="7" indexofoutput="4" />
+                        <Link inputowner="12" indexofinput="2" outputowner="7" indexofoutput="4" />
+                        <Link inputowner="15" indexofinput="2" outputowner="13" indexofoutput="4" />
+                        <Link inputowner="11" indexofinput="2" outputowner="15" indexofoutput="4" />
+                        <Link inputowner="0" indexofinput="4" outputowner="11" indexofoutput="4" />
+                    </Diagram>
+                </BehaviorKeyframe>
+            </BehaviorLayer>
+        </Timeline>
+    </Box>
+</ChoregrapheProject>
