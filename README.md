@@ -9,7 +9,7 @@ In this simulation noa waves hand and wants to be your friend.
 Download link of Choregraphe 2.1.4:
 https://www.softbankrobotics.com/emea/en/support/nao-6/downloads-softwares/former-versions?os=45&category=39
 
-Contact:
+My Contact:
 
 email id: vermahrithik10@gmail.com
 
